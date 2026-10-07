@@ -286,6 +286,83 @@ app.post("/perfil/correo", async (req, res) => {
   }
 });
 
+// CAMBIO (perfil): cambiar el nombre de usuario. Pide la contraseña.
+app.post("/perfil/usuario", async (req, res) => {
+  const usuario = (req.body.usuario || "").trim();
+  const nuevo = (req.body.nuevo || "").trim();
+  const password = req.body.password || "";
+
+  if (nuevo.length < 3) {
+    return res.status(400).json({
+      ok: false,
+      error: "El usuario debe tener al menos 3 caracteres.",
+    });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      "SELECT password FROM usuarios WHERE usuario = $1",
+      [usuario],
+    );
+    if (!rows[0] || !verifyPassword(password, rows[0].password)) {
+      return res
+        .status(401)
+        .json({ ok: false, error: "La contraseña no es correcta." });
+    }
+    await pool.query("UPDATE usuarios SET usuario = $1 WHERE usuario = $2", [
+      nuevo,
+      usuario,
+    ]);
+    res.json({ ok: true, usuario: nuevo });
+  } catch (err) {
+    if (err.code === "23505") {
+      return res
+        .status(409)
+        .json({ ok: false, error: "Ese usuario ya existe. Elige otro nombre." });
+    }
+    console.error("🔴 ERROR EN PERFIL/USUARIO:", err);
+    res
+      .status(500)
+      .json({ ok: false, error: "Error en el servidor. Intenta de nuevo." });
+  }
+});
+
+// CAMBIO (perfil): cambiar la contraseña. Pide la contraseña actual.
+app.post("/perfil/password", async (req, res) => {
+  const usuario = (req.body.usuario || "").trim();
+  const actual = req.body.actual || "";
+  const nueva = req.body.nueva || "";
+
+  if (nueva.length < 6) {
+    return res.status(400).json({
+      ok: false,
+      error: "La nueva contraseña debe tener al menos 6 caracteres.",
+    });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      "SELECT password FROM usuarios WHERE usuario = $1",
+      [usuario],
+    );
+    if (!rows[0] || !verifyPassword(actual, rows[0].password)) {
+      return res
+        .status(401)
+        .json({ ok: false, error: "La contraseña actual no es correcta." });
+    }
+    await pool.query("UPDATE usuarios SET password = $1 WHERE usuario = $2", [
+      hashPassword(nueva),
+      usuario,
+    ]);
+    res.json({ ok: true, mensaje: "Contraseña actualizada." });
+  } catch (err) {
+    console.error("🔴 ERROR EN PERFIL/PASSWORD:", err);
+    res
+      .status(500)
+      .json({ ok: false, error: "Error en el servidor. Intenta de nuevo." });
+  }
+});
+
 // NUEVO: endpoint que le indica al frontend a qué URL debe ir
 app.get("/api/ir-citas", (req, res) => {
   res.json({ ok: true, url: "/citas" });
