@@ -10,9 +10,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // NUEVO: permite que el frontend (localhost:5173) llame al backend (localhost:3000)
+// CAMBIO (modal): también acepta 5174 (Vite usa ese puerto si el 5173 está ocupado)
+// y responde la petición previa OPTIONS que hace el navegador antes de enviar JSON
+const ORIGENES_PERMITIDOS = ["http://localhost:5173", "http://localhost:5174"];
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  const origen = req.headers.origin;
+  if (ORIGENES_PERMITIDOS.includes(origen)) {
+    res.header("Access-Control-Allow-Origin", origen);
+  }
   res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
 
@@ -49,18 +57,34 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// ---------------------------------------------------------------
+// CAMBIO (correo): validación simple del formato de correo
+// ---------------------------------------------------------------
+const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// CAMBIO (recuperar): el código de 6 dígitos se guarda cifrado (sha256)
+function hashCodigo(codigo) {
+  return crypto.createHash("sha256").update(String(codigo)).digest("hex");
+}
+
 // 2. RUTA REGISTRO
-// CAMBIO: ahora responde JSON en vez de redirigir, para que el modal muestre
-// el resultado sin salir del menú principal
+// CAMBIO: responde JSON para el modal
+// CAMBIO (correo): ahora también pide correo (sirve para recuperar la contraseña)
 app.post("/registro", async (req, res) => {
-  const usuario = (req.body.usuario || "").trim(); // CAMBIO: trim para quitar espacios
+  const usuario = (req.body.usuario || "").trim();
+  const correo = (req.body.correo || "").trim().toLowerCase();
   const password = req.body.password || "";
 
-  // CAMBIO: validación básica en el servidor
   if (usuario.length < 3) {
     return res.status(400).json({
       ok: false,
       error: "El usuario debe tener al menos 3 caracteres.",
+    });
+  }
+  if (!CORREO_VALIDO.test(correo)) {
+    return res.status(400).json({
+      ok: false,
+      error: "Escribe un correo válido, por ejemplo nombre@correo.com.",
     });
   }
   if (password.length < 6) {
@@ -72,23 +96,23 @@ app.post("/registro", async (req, res) => {
 
   try {
     await pool.query(
-      "INSERT INTO usuarios (usuario, password) VALUES ($1, $2)",
-      [usuario, hashPassword(password)], // CAMBIO: se guarda el hash, no la contraseña
+      "INSERT INTO usuarios (usuario, correo, password) VALUES ($1, $2, $3)",
+      [usuario, correo, hashPassword(password)],
     );
-
-    // CAMBIO: respuesta JSON; el registro deja al usuario con la sesión iniciada
-    res.status(201).json({ ok: true, usuario });
+    res.status(201).json({ ok: true, usuario, correo });
   } catch (err) {
     console.error("🔴 ERROR EN NEON POSTGRESQL:", err);
 
-    // CAMBIO: 23505 = violación de UNIQUE en PostgreSQL (usuario repetido)
+    // 23505 = dato repetido (UNIQUE). Se revisa si fue el usuario o el correo
     if (err.code === "23505") {
+      const esCorreo = String(err.constraint || err.detail || "").includes("correo");
       return res.status(409).json({
         ok: false,
-        error: "Ese usuario ya existe. Elige otro nombre.",
+        error: esCorreo
+          ? "Ese correo ya tiene una cuenta. Prueba con \"¿Olvidaste tu contraseña?\"."
+          : "Ese usuario ya existe. Elige otro nombre.",
       });
     }
-    // CAMBIO: error en JSON en lugar de HTML
     res.status(500).json({
       ok: false,
       error: "No pudimos registrar tu cuenta. Intenta de nuevo.",
@@ -97,40 +121,168 @@ app.post("/registro", async (req, res) => {
 });
 
 // 3. RUTA LOGIN
-// CAMBIO: también responde JSON para el modal
+// CAMBIO (correo): se puede entrar con el usuario o con el correo
 app.post("/login", async (req, res) => {
-  const usuario = (req.body.usuario || "").trim(); // CAMBIO: trim
+  const identificador = (req.body.usuario || "").trim();
   const password = req.body.password || "";
 
   try {
-    // CAMBIO: se busca solo por usuario; la contraseña se verifica en Node con el hash
     const result = await pool.query(
-      "SELECT usuario, password FROM usuarios WHERE usuario = $1",
-      [usuario],
+      `SELECT usuario, correo, password FROM usuarios
+       WHERE usuario = $1 OR LOWER(correo) = LOWER($1)
+       LIMIT 1`,
+      [identificador],
     );
 
     const fila = result.rows[0];
 
     if (fila && verifyPassword(password, fila.password)) {
-      // CAMBIO: si la cuenta era antigua (texto plano), se actualiza a hash automáticamente
+      // si la cuenta era antigua (texto plano), se actualiza a hash
       if (!fila.password.includes(":")) {
-        await pool.query(
-          "UPDATE usuarios SET password = $1 WHERE usuario = $2",
-          [hashPassword(password), usuario],
-        );
+        await pool.query("UPDATE usuarios SET password = $1 WHERE usuario = $2", [
+          hashPassword(password),
+          fila.usuario,
+        ]);
       }
-      res.json({ ok: true, usuario: fila.usuario }); // CAMBIO: JSON en vez de redirect
+      res.json({ ok: true, usuario: fila.usuario, correo: fila.correo });
     } else {
-      // CAMBIO: mismo mensaje exista o no el usuario (no revela cuál falló)
+      // mismo mensaje exista o no el usuario (no revela cuál falló)
       res
         .status(401)
-        .json({ ok: false, error: "Usuario o contraseña incorrectos." });
+        .json({ ok: false, error: "Usuario, correo o contraseña incorrectos." });
     }
   } catch (err) {
     console.error("🔴 ERROR EN LOGIN:", err);
     res
       .status(500)
-      .json({ ok: false, error: "Error en el servidor. Intenta de nuevo." }); // CAMBIO: JSON
+      .json({ ok: false, error: "Error en el servidor. Intenta de nuevo." });
+  }
+});
+
+// ---------------------------------------------------------------
+// CAMBIO (recuperar): paso 1 — pedir un código con el correo.
+// MODO PRUEBA: todavía no se envían correos de verdad. El código se
+// muestra en esta terminal y se devuelve al frontend como
+// "codigoPrueba" para poder probar. Cuando configuren un servicio de
+// correo (por ejemplo nodemailer), envíen el código por correo y
+// quiten "codigoPrueba" de la respuesta.
+// ---------------------------------------------------------------
+app.post("/recuperar", async (req, res) => {
+  const correo = (req.body.correo || "").trim().toLowerCase();
+  const mensaje =
+    "Si ese correo tiene una cuenta, te enviamos un código de 6 dígitos.";
+
+  if (!CORREO_VALIDO.test(correo)) {
+    return res
+      .status(400)
+      .json({ ok: false, error: "Escribe un correo válido." });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      "SELECT usuario FROM usuarios WHERE LOWER(correo) = $1",
+      [correo],
+    );
+    // misma respuesta exista o no, para no revelar qué correos están registrados
+    if (!rows[0]) return res.json({ ok: true, mensaje });
+
+    const codigo = String(crypto.randomInt(100000, 1000000));
+    await pool.query(
+      `UPDATE usuarios
+       SET codigo_recuperacion = $1, codigo_expira = NOW() + INTERVAL '15 minutes'
+       WHERE LOWER(correo) = $2`,
+      [hashCodigo(codigo), correo],
+    );
+
+    console.log(`📧 [MODO PRUEBA] Código para ${correo}: ${codigo}`);
+    res.json({ ok: true, mensaje, codigoPrueba: codigo });
+  } catch (err) {
+    console.error("🔴 ERROR EN RECUPERAR:", err);
+    res
+      .status(500)
+      .json({ ok: false, error: "Error en el servidor. Intenta de nuevo." });
+  }
+});
+
+// CAMBIO (recuperar): paso 2 — cambiar la contraseña con el código
+app.post("/restablecer", async (req, res) => {
+  const correo = (req.body.correo || "").trim().toLowerCase();
+  const codigo = (req.body.codigo || "").trim();
+  const password = req.body.password || "";
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      ok: false,
+      error: "La nueva contraseña debe tener al menos 6 caracteres.",
+    });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      `SELECT usuario FROM usuarios
+       WHERE LOWER(correo) = $1
+         AND codigo_recuperacion = $2
+         AND codigo_expira > NOW()`,
+      [correo, hashCodigo(codigo)],
+    );
+    if (!rows[0]) {
+      return res.status(400).json({
+        ok: false,
+        error: "El código no es correcto o ya venció. Pide uno nuevo.",
+      });
+    }
+
+    await pool.query(
+      `UPDATE usuarios
+       SET password = $1, codigo_recuperacion = NULL, codigo_expira = NULL
+       WHERE usuario = $2`,
+      [hashPassword(password), rows[0].usuario],
+    );
+    res.json({ ok: true, mensaje: "Listo. Ya puedes ingresar con tu nueva contraseña." });
+  } catch (err) {
+    console.error("🔴 ERROR EN RESTABLECER:", err);
+    res
+      .status(500)
+      .json({ ok: false, error: "Error en el servidor. Intenta de nuevo." });
+  }
+});
+
+// CAMBIO (perfil): agregar o cambiar el correo desde "Mi perfil".
+// Pide la contraseña para confirmar que es el dueño de la cuenta.
+app.post("/perfil/correo", async (req, res) => {
+  const usuario = (req.body.usuario || "").trim();
+  const correo = (req.body.correo || "").trim().toLowerCase();
+  const password = req.body.password || "";
+
+  if (!CORREO_VALIDO.test(correo)) {
+    return res.status(400).json({ ok: false, error: "Escribe un correo válido." });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      "SELECT password FROM usuarios WHERE usuario = $1",
+      [usuario],
+    );
+    if (!rows[0] || !verifyPassword(password, rows[0].password)) {
+      return res
+        .status(401)
+        .json({ ok: false, error: "La contraseña no es correcta." });
+    }
+    await pool.query("UPDATE usuarios SET correo = $1 WHERE usuario = $2", [
+      correo,
+      usuario,
+    ]);
+    res.json({ ok: true, correo });
+  } catch (err) {
+    if (err.code === "23505") {
+      return res
+        .status(409)
+        .json({ ok: false, error: "Ese correo ya está en otra cuenta." });
+    }
+    console.error("🔴 ERROR EN PERFIL/CORREO:", err);
+    res
+      .status(500)
+      .json({ ok: false, error: "Error en el servidor. Intenta de nuevo." });
   }
 });
 
@@ -161,7 +313,54 @@ app.get("/principal", (req, res) => {
   `);
 });
 
+// ---------------------------------------------------------------
+// CAMBIO (db): al arrancar, revisa la conexión con Neon y crea la
+// tabla usuarios si todavía no existe (si ya existe, no la toca)
+// ---------------------------------------------------------------
+async function prepararBaseDeDatos() {
+  if (!process.env.DATABASE_URL) {
+    console.error("🔴 Falta DATABASE_URL en backend/.env");
+    return;
+  }
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS usuarios (
+        id SERIAL PRIMARY KEY,
+        usuario VARCHAR(50) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        creado_en TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    // CAMBIO (correo): columnas nuevas; si ya existen, no pasa nada
+    await pool.query(`
+      ALTER TABLE usuarios
+        ADD COLUMN IF NOT EXISTS correo VARCHAR(150),
+        ADD COLUMN IF NOT EXISTS codigo_recuperacion VARCHAR(64),
+        ADD COLUMN IF NOT EXISTS codigo_expira TIMESTAMP
+    `);
+    await pool.query(
+      "CREATE UNIQUE INDEX IF NOT EXISTS usuarios_correo_unico ON usuarios (LOWER(correo))",
+    );
+    const { rows } = await pool.query("SELECT COUNT(*)::int AS total FROM usuarios");
+    console.log(`🟢 Conectado a Neon. Usuarios registrados: ${rows[0].total}`);
+  } catch (err) {
+    console.error("🔴 No se pudo conectar a Neon:", err.message);
+  }
+}
+
+// CAMBIO (db): ruta para probar la conexión desde el navegador
+// -> http://localhost:3000/api/estado-db
+app.get("/api/estado-db", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT COUNT(*)::int AS total FROM usuarios");
+    res.json({ ok: true, conectado: true, usuarios: rows[0].total });
+  } catch (err) {
+    res.status(500).json({ ok: false, conectado: false, error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor funcionando en http://localhost:${PORT}`);
+  prepararBaseDeDatos(); // CAMBIO (db)
 });

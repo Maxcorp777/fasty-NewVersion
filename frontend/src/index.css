@@ -1,13 +1,25 @@
-@import url("https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=UnifrakturCook:wght@700&display=swap");
+/* CAMBIO (diseño): nueva tipografía Jost; se conserva la gótica para la marca */
+@import url("https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=UnifrakturCook:wght@700&display=swap");
 
 :root {
+  /* CAMBIO (diseño): paleta clara y elegante con acento neón naranja */
+  --papel: #fafaf8;
+  --tenue: #f1f2f0;
+  --grafito: #1d1e22;
+  --pizarra: #5e626b;
+  --linea: #e2e2de;
+  --neon: #ff7a1a;
+  --neon-claro: #ff9a4d;
+  --neon-brillo: rgba(255, 122, 26, 0.22);
+
+  /* se conservan por compatibilidad con otras pantallas */
   --negro: #000;
   --carbon: #363636;
   --oro: #b8975a;
   --oro-claro: #d2b074;
   --blanco: #f5f2ec;
 
-  --fuente-texto: "Courier Prime", "Courier New", monospace;
+  --fuente-texto: "Jost", "Segoe UI", sans-serif;
   --fuente-gotica: "UnifrakturCook", "Old English Text MT", serif;
 }
 
@@ -19,15 +31,17 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 90px;
+  scroll-padding-top: 84px;
 }
 
 body {
   margin: 0;
-  background: var(--negro);
-  color: var(--blanco);
+  background: var(--papel);
+  color: var(--grafito);
   font-family: var(--fuente-texto);
+  font-size: 1.0625rem;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 #root {
@@ -38,8 +52,14 @@ a {
   color: inherit;
 }
 
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
 :focus-visible {
-  outline: 2px solid var(--oro-claro);
+  outline: 2px solid var(--neon);
   outline-offset: 3px;
 }
 
