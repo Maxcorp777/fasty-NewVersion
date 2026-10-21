@@ -1568,3 +1568,249 @@
     bottom: 16px;
   }
 }
+
+/* =========================================================
+   CAMBIO (diseño): "La barbería" con ilustración
+   ========================================================= */
+.seccion__antetitulo {
+  margin: 0 0 10px;
+  color: var(--neon);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.barberia {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  align-items: center;
+  gap: 56px;
+}
+
+.ilustracion {
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+  justify-self: center;
+}
+
+.destacados {
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 18px;
+}
+
+.destacado {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.destacado strong {
+  display: block;
+  font-weight: 500;
+}
+
+.destacado > span:last-child > span {
+  color: var(--pizarra);
+  font-size: 0.98rem;
+}
+
+.destacado__icono,
+.calidad__icono {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--neon-brillo);
+  color: var(--neon);
+}
+
+/* =========================================================
+   CAMBIO (diseño): "Lo que cuidamos" como tarjetas con ícono
+   ========================================================= */
+.calidad {
+  gap: 24px;
+}
+
+.calidad__bloque {
+  padding: 32px 28px;
+  border-top: none;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(29, 30, 34, 0.04), 0 10px 30px rgba(29, 30, 34, 0.06);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.calidad__bloque:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 1px 2px rgba(29, 30, 34, 0.04), 0 16px 36px rgba(255, 122, 26, 0.14);
+}
+
+.calidad__icono {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 20px;
+}
+
+/* =========================================================
+   CAMBIO (barberos): tarjetas con foto, descripción y estrellas
+   ========================================================= */
+.barberos {
+  clear: both;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+  gap: 14px;
+}
+
+.barbero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 18px 20px;
+  border: 1px solid var(--linea);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--grafito);
+  font-family: var(--fuente-texto);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.barbero:hover {
+  border-color: #c9c9c4;
+  transform: translateY(-2px);
+}
+
+.barbero--activo {
+  border-color: var(--neon);
+  box-shadow: 0 0 0 1px var(--neon), 0 10px 24px rgba(255, 122, 26, 0.16);
+}
+
+.barbero__foto {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px var(--linea);
+}
+
+.barbero--activo .barbero__foto {
+  box-shadow: 0 0 0 2px var(--neon);
+}
+
+.barbero__foto--iniciales,
+.barbero__foto--icono {
+  display: grid;
+  place-items: center;
+  background: var(--grafito);
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.barbero__foto--icono {
+  background: var(--neon-brillo);
+  color: var(--neon);
+}
+
+.barbero__nombre {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.barbero__especialidad {
+  color: var(--neon);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.barbero__descripcion {
+  margin-top: 6px;
+  color: var(--pizarra);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.barbero__sin-estrellas {
+  color: var(--pizarra);
+  font-size: 0.9rem;
+}
+
+.estrellas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+
+.estrellas__base {
+  position: relative;
+  display: inline-block;
+  color: #dcdcd7;
+  font-size: 1.05rem;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.estrellas__relleno {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--neon);
+}
+
+.estrellas__numero {
+  font-weight: 600;
+}
+
+.estrellas__resenas {
+  color: var(--pizarra);
+}
+
+@media (max-width: 960px) {
+  .barberia {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .ilustracion {
+    max-width: 380px;
+  }
+}
+
+@media (max-width: 760px) {
+  .calidad {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CAMBIO (barberos): calificación negativa -> estrellas rojas y al revés */
+.estrellas--negativas .estrellas__base {
+  transform: rotate(180deg);
+}
+
+.estrellas--negativas .estrellas__relleno {
+  color: #d93025;
+}
+
+.estrellas--negativas .estrellas__numero {
+  color: #d93025;
+}

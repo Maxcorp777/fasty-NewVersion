@@ -16,7 +16,9 @@ import {
 } from "react-router-dom";
 import "./App.css";
 import logo from "./assets/logo-fasty.png";
-
+import fotoSebastian from "./Barberos/Sebastian.jpg";
+import fotoJanier from "./Barberos/Janier.jpg";
+import fotoAbelardo from "./Barberos/image.png"
 /* ------------------------------------------------------------------ */
 /* CONFIGURACIÓN — cambia estos valores cuando los tengas listos       */
 /* ------------------------------------------------------------------ */
@@ -78,8 +80,52 @@ const SERVICIOS = [
   },
 ];
 
-/* CAMBIO (citas): barberos de ejemplo */
-const BARBEROS = ["Cualquiera disponible", "Andrés", "Camilo", "Julián"];
+/* CAMBIO (barberos): datos DE EJEMPLO. Cámbienlos por los reales.
+   - foto: pongan la imagen en frontend/public/barberos/ y escriban la ruta,
+     por ejemplo "/barberos/andres.jpg". Si la foto no existe o se deja en "",
+     se muestra un avatar con las iniciales.
+   - calificacion: de 0 a 5 (acepta decimales, ej. 4.7).
+   - resenas: cuántas personas lo han calificado. */
+const CUALQUIERA = "Cualquiera disponible";
+const BARBEROS = [
+  {
+    nombre: CUALQUIERA,
+    especialidad: "El primero libre",
+    descripcion: "Te asignamos al barbero que esté disponible a la hora que elijas.",
+  },
+  {
+    nombre: "Sebastián",
+    foto: fotoSebastian,
+    especialidad: "Rasurado de bolas [Con lengua]",
+    descripcion: "Sobreviviente de una prisión en Afganistán en 2016 y veterano/a de tres divorcios fallidos, es un icono travesti que no le teme a nada. Defensor/a acérrimo/a de la causa LGBTQ+, hoy comparte techo con sus padres mientras demuestra que el talento nace donde sea: aprendió a motilar jugando ROBLOX y ahora lo lleva al mundo real con toda la actitud.",
+    Personalidad: "Reservado, Sumiso, Gay, Timidoi, auténtico y con miedo al qué dirán.",
+    calificacion: -3.5, // negativa: las estrellas salen rojas y al revés
+    resenas: 67,
+  },
+  {
+    nombre: "Janier",
+    foto: fotoJanier,
+    especialidad: "Especialidad: Ninguna",
+    descripcion: "Exmilitar de la Unión Soviética refugiado en casa de sus padres mientras esquiva una orden de captura internacional de Corea del Sur por crímenes de guerra, dejó atrás su cautiverio en Afganistán en 2016 y el fracaso de tres divorcios para reinventarse por completo. Hoy es una icónica figura travesti y referente del activismo LGBTQ+ que se gana la vida frente a la barbería, aplicando con la navaja la misma precisión milimétrica que dominó practicando cortes de cabello en ROBLOX.",
+    calificacion: 0.7,
+    resenas: 0,
+  },
+  {
+    nombre: "Abelardo",
+    foto: fotoAbelardo,
+    especialidad: "Especialidad: Bienvenido a la patria milagro",
+    descripcion: "Es el presidente cuesta mas.",
+    calificacion: 4.8,
+    resenas: 74,
+  },
+];
+
+/* CAMBIO (barbería): puntos destacados de la sección "La barbería" */
+const DESTACADOS = [
+  { icono: "reloj", titulo: "Con cita, sin filas", texto: "Agendas en línea y llegas a tu hora." },
+  { icono: "tijeras", titulo: "Barberos de oficio", texto: "Cada uno con su especialidad." },
+  { icono: "cafe", titulo: "Sin afanes", texto: "Buena música y café mientras esperas." },
+];
 
 /* CAMBIO (citas): horario de atención para las citas de prueba */
 const HORA_APERTURA = 10; // 10:00 a. m.
@@ -120,6 +166,7 @@ const TARJETAS = [
 /* Viñetas de calidad. Ajusten los textos a lo que realmente ofrece la barbería. */
 const CALIDAD = [
   {
+    icono: "tijeras",
     titulo: "En el servicio",
     puntos: [
       "Barberos con años de oficio y formación constante.",
@@ -128,6 +175,7 @@ const CALIDAD = [
     ],
   },
   {
+    icono: "silla",
     titulo: "En el lugar",
     puntos: [
       "Herramientas desinfectadas entre cada cliente.",
@@ -136,6 +184,7 @@ const CALIDAD = [
     ],
   },
   {
+    icono: "frasco",
     titulo: "En los productos",
     puntos: [
       "Marcas profesionales para cabello y barba.",
@@ -284,6 +333,178 @@ const IconoX = () => (
 /* ------------------------------------------------------------------ */
 /* CAMBIO (perfil): avatar minimalista con la inicial del usuario      */
 /* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ */
+/* CAMBIO (diseño): íconos e ilustraciones dibujadas en SVG            */
+/* ------------------------------------------------------------------ */
+const TRAZOS = {
+  tijeras: (
+    <>
+      <circle cx="6" cy="6" r="3" />
+      <circle cx="6" cy="18" r="3" />
+      <path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12" />
+    </>
+  ),
+  silla: (
+    <>
+      <path d="M7 4h10v7H7z" />
+      <path d="M5 11h14v3H5zM8 14v3M16 14v3M6 17h12M12 17v4M8 21h8" />
+    </>
+  ),
+  frasco: (
+    <>
+      <path d="M9 3h6v3H9z" />
+      <path d="M8 6h8l1 3v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V9z" />
+      <path d="M7 12h10" />
+    </>
+  ),
+  reloj: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
+  cafe: (
+    <>
+      <path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" />
+      <path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16M8 3c0 1.5 1 1.5 1 3M12 3c0 1.5 1 1.5 1 3" />
+    </>
+  ),
+  grupo: (
+    <>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+      <circle cx="17" cy="9" r="2.5" />
+      <path d="M15.5 14.2A5 5 0 0 1 21 19" />
+    </>
+  ),
+};
+
+function Icono({ nombre, tamano = 26 }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={tamano}
+      height={tamano}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {TRAZOS[nombre]}
+    </svg>
+  );
+}
+
+/* Ilustración de la sección "La barbería": silla de barbero, poste y herramientas */
+function IlustracionBarberia() {
+  return (
+    <svg className="ilustracion" viewBox="0 0 420 360" role="img" aria-label="Ilustración de una silla de barbería">
+      <defs>
+        <pattern id="rayas-poste" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+          <rect width="20" height="20" fill="#fff" />
+          <rect width="7" height="20" fill="var(--neon)" />
+          <rect x="10" width="4" height="20" fill="var(--grafito)" />
+        </pattern>
+      </defs>
+
+      {/* fondo */}
+      <circle cx="210" cy="190" r="150" fill="var(--neon-brillo)" />
+      <circle cx="210" cy="190" r="112" fill="#fff" opacity="0.7" />
+
+      {/* espejo */}
+      <rect x="150" y="38" width="120" height="96" rx="48" fill="#fff" stroke="var(--grafito)" strokeWidth="3" />
+      <path d="M176 66c10-12 26-14 36-8" fill="none" stroke="var(--linea)" strokeWidth="6" strokeLinecap="round" />
+
+      {/* poste de barbería */}
+      <rect x="338" y="60" width="26" height="12" rx="4" fill="var(--grafito)" />
+      <rect x="341" y="72" width="20" height="150" rx="10" fill="url(#rayas-poste)" stroke="var(--grafito)" strokeWidth="3" />
+      <rect x="338" y="222" width="26" height="12" rx="4" fill="var(--grafito)" />
+
+      {/* silla */}
+      <rect x="168" y="150" width="84" height="86" rx="18" fill="var(--grafito)" />
+      <rect x="182" y="164" width="56" height="58" rx="10" fill="#2f3036" />
+      <rect x="146" y="232" width="128" height="26" rx="13" fill="var(--grafito)" />
+      <rect x="132" y="206" width="30" height="12" rx="6" fill="var(--neon)" />
+      <rect x="258" y="206" width="30" height="12" rx="6" fill="var(--neon)" />
+      <rect x="203" y="258" width="14" height="40" fill="#8b8e96" />
+      <ellipse cx="210" cy="306" rx="62" ry="12" fill="#8b8e96" />
+      <rect x="176" y="276" width="68" height="8" rx="4" fill="#b4b7bd" />
+
+      {/* tijeras */}
+      <g transform="translate(58 250) rotate(-20)" fill="none" stroke="var(--grafito)" strokeWidth="4" strokeLinecap="round">
+        <circle cx="0" cy="0" r="11" />
+        <circle cx="0" cy="34" r="11" />
+        <path d="M10 6 60 30M10 28 60 4" />
+      </g>
+
+      {/* peine */}
+      <g transform="translate(300 296) rotate(-8)">
+        <rect width="78" height="14" rx="4" fill="var(--neon)" />
+        {Array.from({ length: 9 }, (_, i) => (
+          <rect key={i} x={6 + i * 8} y="14" width="3" height="12" fill="var(--neon)" />
+        ))}
+      </g>
+
+      {/* destellos */}
+      <path d="M96 92l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="var(--neon)" />
+      <path d="M318 26l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="var(--grafito)" />
+    </svg>
+  );
+}
+
+/* CAMBIO (barberos): estrellas con decimales (4.7 llena 4 y 70 % de la quinta) */
+function Estrellas({ valor, resenas }) {
+  const negativa = valor < 0;
+  const porcentaje = Math.min(5, Math.abs(valor)) * 20;
+  return (
+    <span
+      className={`estrellas ${negativa ? "estrellas--negativas" : ""}`}
+      aria-label={`${valor} de 5 estrellas, ${resenas} reseñas`}
+    >
+      <span className="estrellas__base" aria-hidden="true">
+        ★★★★★
+        <span className="estrellas__relleno" style={{ width: `${porcentaje}%` }}>
+          ★★★★★
+        </span>
+      </span>
+      <span className="estrellas__numero">{valor.toFixed(1)}</span>
+      <span className="estrellas__resenas">({resenas})</span>
+    </span>
+  );
+}
+
+/* CAMBIO (barberos): foto del barbero o, si no carga, avatar con iniciales */
+function FotoBarbero({ barbero }) {
+  const [fallo, setFallo] = useState(false);
+  if (barbero.nombre === CUALQUIERA) {
+    return (
+      <span className="barbero__foto barbero__foto--icono">
+        <Icono nombre="grupo" tamano={34} />
+      </span>
+    );
+  }
+  if (!barbero.foto || fallo) {
+    const iniciales = barbero.nombre
+      .split(" ")
+      .map((p) => p[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+    return <span className="barbero__foto barbero__foto--iniciales">{iniciales}</span>;
+  }
+  return (
+    <img
+      className="barbero__foto"
+      src={barbero.foto}
+      alt={`Foto de ${barbero.nombre}`}
+      loading="lazy"
+      onError={() => setFallo(true)}
+    />
+  );
+}
+
 function Avatar({ nombre, grande = false }) {
   const inicial = (nombre || "?").trim().charAt(0).toUpperCase();
   return (
@@ -823,12 +1044,31 @@ function Inicio() {
 
         {/* ---------- La Barbería ---------- */}
         <section id="barberia" className="seccion">
-          <div className="intro">
-            <h2 className="seccion__titulo">La barbería</h2>
-            <p className="seccion__texto">
-              Escribe aquí la historia de Fasty Barbershop: quiénes son, cuánto tiempo llevan cortando y
-              qué los hace diferentes.
-            </p>
+          <div className="barberia">
+            <div className="intro">
+              <p className="seccion__antetitulo">Fasty Barbershop</p>
+              <h2 className="seccion__titulo">La barbería</h2>
+              {/* CAMBIO (barbería): texto de ejemplo. Cámbienlo por la historia real. */}
+              <p className="seccion__texto">
+                Fasty nació para que cortarte el pelo sea un plan y no una espera. Agendas tu cita en línea,
+                eliges a tu barbero y llegas a sentarte. Nosotros ponemos el oficio, las herramientas limpias
+                y el café.
+              </p>
+              <ul className="destacados">
+                {DESTACADOS.map((d) => (
+                  <li key={d.titulo} className="destacado">
+                    <span className="destacado__icono">
+                      <Icono nombre={d.icono} tamano={22} />
+                    </span>
+                    <span>
+                      <strong>{d.titulo}</strong>
+                      <span>{d.texto}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <IlustracionBarberia />
           </div>
         </section>
 
@@ -838,6 +1078,9 @@ function Inicio() {
           <div className="calidad">
             {CALIDAD.map((c) => (
               <div key={c.titulo} className="calidad__bloque">
+                <span className="calidad__icono">
+                  <Icono nombre={c.icono} tamano={28} />
+                </span>
                 <h3 className="calidad__titulo">{c.titulo}</h3>
                 <ul className="calidad__lista">
                   {c.puntos.map((p) => (
@@ -971,7 +1214,7 @@ function Citas() {
 
   const hoy = hoyISO();
   const [servicio, setServicio] = useState(null);
-  const [barbero, setBarbero] = useState(BARBEROS[0]);
+  const [barbero, setBarbero] = useState(CUALQUIERA);
   const [fecha, setFecha] = useState(hoy);
   const [turno, setTurno] = useState("");
   const [nota, setNota] = useState("");
@@ -1105,19 +1348,27 @@ function Citas() {
 
               <fieldset className="agenda__paso">
                 <legend>Barbero</legend>
-                <div className="chips">
+                <div className="barberos">
                   {BARBEROS.map((b) => (
                     <button
-                      key={b}
+                      key={b.nombre}
                       type="button"
-                      className={`chip ${barbero === b ? "chip--activo" : ""}`}
-                      aria-pressed={barbero === b}
+                      className={`barbero ${barbero === b.nombre ? "barbero--activo" : ""}`}
+                      aria-pressed={barbero === b.nombre}
                       onClick={() => {
-                        setBarbero(b);
+                        setBarbero(b.nombre);
                         setTurno("");
                       }}
                     >
-                      {b}
+                      <FotoBarbero barbero={b} />
+                      <span className="barbero__nombre">{b.nombre}</span>
+                      <span className="barbero__especialidad">{b.especialidad}</span>
+                      {b.calificacion != null ? (
+                        <Estrellas valor={b.calificacion} resenas={b.resenas} />
+                      ) : (
+                        <span className="barbero__sin-estrellas">Sin preferencia</span>
+                      )}
+                      <span className="barbero__descripcion">{b.descripcion}</span>
                     </button>
                   ))}
                 </div>
